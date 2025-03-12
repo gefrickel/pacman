@@ -1,3 +1,10 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: tekton-no-creds
+  annotations:
+    tekton.dev/disable-creds-init: "true"
+---
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
@@ -75,6 +82,7 @@ kind: PipelineRun
 metadata:
   name: apply-yaml-run
 spec:
+  serviceAccountName: tekton-no-creds
   pipelineRef:
     name: apply-yaml-pipeline
   workspaces:
@@ -90,11 +98,10 @@ spec:
               storage: 1Gi
   params:
     - name: repo-url
-      value: "https://github.com/Alexander-Saupp/pacman.git"
+      value: "https://github.com/alexander-saupp/pacman.git"
     - name: repo-revision
       value: "main"
     - name: path
       value: "pacman/"
     - name: namespace
       value: "pacman"
-
