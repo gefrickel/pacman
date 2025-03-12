@@ -31,7 +31,7 @@ spec:
 apiVersion: tekton.dev/v1beta1
 kind: Pipeline
 metadata:
-  name: apply-yaml-pipeline
+  name: pacman-pipeline
 spec:
   workspaces:
     - name: shared-workspace
@@ -59,7 +59,7 @@ spec:
           value: "$(params.repo-url)"
         - name: revision
           value: "$(params.repo-revision)"
-    - name: apply-yaml
+    - name: pacman
       taskSpec:
         steps:
           - name: apply
@@ -87,10 +87,11 @@ spec:
 apiVersion: tekton.dev/v1beta1
 kind: PipelineRun
 metadata:
-  name: apply-yaml-run
+  name: pacman-run
 spec:
+  serviceAccountName: pipeline
   pipelineRef:
-    name: apply-yaml-pipeline
+    name: pacman-pipeline
   workspaces:
     - name: shared-workspace
       volumeClaimTemplate:
