@@ -1,0 +1,100 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: git-clone
+spec:
+  workspaces:
+    - name: output
+  params:
+    - name: url
+      type: string
+    - name: revision
+      type: string
+      default: "main"
+  steps:
+    - name: clone
+      image: alpine/git
+      script: |
+        #!/bin/sh
+        set -e
+        git clone --depth=1 -b $(params.revision) $(params.url) $(workspaces.output.path)
+---
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: apply-yaml-pipeline
+spec:
+  workspaces:
+    - name: shared-workspace
+  params:
+    - name: repo-url
+      type: string
+    - name: repo-revision
+      type: string
+      default: "main"
+    - name: path
+      type: string
+      default: "pacman/"
+    - name: namespace
+      type: string
+      default: "pacman"
+  tasks:
+    - name: clone-repo
+      taskRef:
+        name: git-clone
+      workspaces:
+        - name: output
+          workspace: shared-workspace
+      params:
+        - name: url
+          value: "$(params.repo-url)"
+        - name: revision
+          value: "$(params.repo-revision)"
+    - name: apply-yaml
+      taskSpec:
+        steps:
+          - name: apply
+            image: bitnami/kubectl:latest
+            script: |
+              #!/bin/sh
+              set -e
+              kubectl get namespace $(params.namespace) || kubectl create namespace $(params.namespace)
+              if [ -f "$(workspaces.source.path)/$(params.path)/kustomization.yaml" ]; then
+                kubectl kustomize $(workspaces.source.path)/$(params.path) | kubectl apply -f - -n $(params.namespace)
+              else
+                kubectl apply -f $(workspaces.source.path)/$(params.path) -n $(params.namespace)
+              fi
+      runAfter:
+        - clone-repo
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+---
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: apply-yaml-run
+spec:
+  pipelineRef:
+    name: apply-yaml-pipeline
+  workspaces:
+    - name: shared-workspace
+      volumeClaimTemplate:
+        metadata:
+          name: pipeline-pvc
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 1Gi
+  params:
+    - name: repo-url
+      value: "https://github.com/Alexander-Saupp/pacman.git"
+    - name: repo-revision
+      value: "main"
+    - name: path
+      value: "pacman/"
+    - name: namespace
+      value: "pacman"
+
