@@ -82,7 +82,6 @@ kind: PipelineRun
 metadata:
   name: apply-yaml-run
 spec:
-  serviceAccountName: tekton-no-creds
   pipelineRef:
     name: apply-yaml-pipeline
   workspaces:
