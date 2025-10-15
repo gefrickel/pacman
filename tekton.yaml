@@ -46,7 +46,7 @@ spec:
       default: "pacman/"
     - name: namespace
       type: string
-      default: "pacman"
+      default: "ml-pacman"
   tasks:
     - name: clone-repo
       taskRef:
