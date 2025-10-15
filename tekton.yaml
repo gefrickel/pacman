@@ -105,7 +105,7 @@ spec:
               storage: 1Gi
   params:
     - name: repo-url
-      value: "https://github.com/alexander-saupp/pacman.git"
+      value: "https://github.com/gefrickel/pacman.git"
     - name: repo-revision
       value: "main"
     - name: path
